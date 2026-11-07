@@ -29,6 +29,7 @@ import com.v2ray.ang.util.QRCodeDecoder
 import com.v2ray.ang.util.Utils
 import okhttp3.Headers
 import java.net.URI
+import java.util.UUID
 
 object AngConfigManager {
 
@@ -488,6 +489,17 @@ object AngConfigManager {
             val userAgent = it.subscription.userAgent
             val requestHeaders = it.subscription.requestHeaders
             val sendHwid = it.subscription.sendHwid
+            // Stable, app-generated UUID scoped to this subscription.
+            // It is persisted so refreshes do not register a new device each time.
+            val subscriptionHwid = if (sendHwid) {
+                it.subscription.hwid?.takeIf { id -> id.isNotBlank() }
+                    ?: UUID.randomUUID().toString().also { id ->
+                        it.subscription.hwid = id
+                        MmkvManager.encodeSubscription(it.guid, it.subscription)
+                    }
+            } else {
+                null
+            }
             val proxyUsername = SettingsManager.getSocksUsername()
             val proxyPassword = SettingsManager.getSocksPassword()
 
@@ -510,6 +522,7 @@ object AngConfigManager {
                         userAgent = userAgent,
                         requestHeaders = requestHeaders,
                         sendHwid = sendHwid,
+                        hwid = subscriptionHwid,
                         timeout = 15000,
                         httpPort = httpPort,
                         proxyUsername = proxyUsername,
@@ -528,7 +541,8 @@ object AngConfigManager {
                             url = url,
                             userAgent = userAgent,
                             requestHeaders = requestHeaders,
-                            sendHwid = it.subscription.sendHwid
+                            sendHwid = sendHwid,
+                            hwid = subscriptionHwid
                         ),
                         captureUsageInfo
                     )
