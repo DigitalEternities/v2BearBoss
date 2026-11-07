@@ -508,6 +508,7 @@ object AngConfigManager {
                         url = url,
                         userAgent = userAgent,
                         requestHeaders = requestHeaders,
+                        sendHwid = it.subscription.sendHwid,
                         timeout = 15000,
                         httpPort = httpPort,
                         proxyUsername = proxyUsername,
@@ -525,7 +526,8 @@ object AngConfigManager {
                         UrlContentRequest(
                             url = url,
                             userAgent = userAgent,
-                            requestHeaders = requestHeaders
+                            requestHeaders = requestHeaders,
+                            sendHwid = it.subscription.sendHwid
                         ),
                         captureUsageInfo
                     )
