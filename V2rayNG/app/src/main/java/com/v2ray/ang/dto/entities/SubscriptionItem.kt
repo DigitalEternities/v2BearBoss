@@ -15,6 +15,8 @@ data class SubscriptionItem(
     var userAgent: String? = null,
     var requestHeaders: String? = null,
     var sendHwid: Boolean = false,
+    // Stable, app-generated per-subscription identifier for subscription requests.
+    var hwid: String? = null,
     var usageInfo: SubscriptionUsageInfo? = null,
 )
 
