@@ -1,5 +1,8 @@
 package com.v2ray.ang.util
 
+import android.os.Build
+import android.provider.Settings
+import com.v2ray.ang.AngApplication
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.LOOPBACK
 import com.v2ray.ang.BuildConfig
@@ -169,6 +172,23 @@ object HttpUtil {
 
             applyEmbeddedBasicAuthHeader(currentUrl, requestBuilder)
 
+            // HWID is opt-in per subscription. Send this device's real Android ID;
+            // never fabricate or override it to impersonate another device.
+            if (request.sendHwid) {
+                val androidId = runCatching {
+                    Settings.Secure.getString(
+                        AngApplication.application.contentResolver,
+                        Settings.Secure.ANDROID_ID
+                    )
+                }.getOrNull()?.takeIf { it.isNotBlank() }
+
+                if (androidId != null) {
+                    requestBuilder.header("X-HWID", androidId)
+                    requestBuilder.header("X-Device-OS", "Android")
+                    requestBuilder.header("X-Ver-OS", Build.VERSION.RELEASE.orEmpty())
+                    requestBuilder.header("X-Device-Model", Build.MODEL.orEmpty())
+                }
+            }
 
             val headersMap = JsonUtil.parseHeadersToMap(request.requestHeaders)
             for ((key, value) in headersMap) {
