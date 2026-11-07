@@ -1,7 +1,6 @@
 package com.v2ray.ang.util
 
 import android.os.Build
-import android.provider.Settings
 import java.util.Locale
 import com.v2ray.ang.AngApplication
 import com.v2ray.ang.AppConfig
@@ -155,6 +154,7 @@ object HttpUtil {
     ): String {
         var currentUrl = request.url
         var redirects = 0
+        var sendHwidToCurrentOrigin = true
         val maxRedirects = 3
 
         while (redirects++ < maxRedirects) {
@@ -173,31 +173,26 @@ object HttpUtil {
 
             applyEmbeddedBasicAuthHeader(currentUrl, requestBuilder)
 
-            // HWID is opt-in per subscription. Send this device's real Android ID;
-            // never fabricate or override it to impersonate another device.
-            if (request.sendHwid) {
-                val androidId = runCatching {
-                    Settings.Secure.getString(
-                        AngApplication.application.contentResolver,
-                        Settings.Secure.ANDROID_ID
-                    )
-                }.getOrNull()?.takeIf { it.isNotBlank() }
-
-                if (androidId != null) {
-                    requestBuilder.header("X-HWID", androidId)
-                    requestBuilder.header("X-Device-OS", "android")
-                    requestBuilder.header("X-Ver-OS", Build.VERSION.RELEASE.orEmpty())
-                    requestBuilder.header("X-Device-Model", Build.MODEL.orEmpty())
-                    requestBuilder.header("X-Device-Locale", Locale.getDefault().language)
-                }
-            }
-
             val headersMap = JsonUtil.parseHeadersToMap(request.requestHeaders)
             for ((key, value) in headersMap) {
                 LogUtil.d(AppConfig.TAG, "Adding custom header: $key = $value")
                 try {
                     requestBuilder.header(key, value)
                 } catch (_: IllegalArgumentException) {
+                }
+            }
+
+            // Standard subscription device identity, stable per subscription.
+            // It is never forwarded to a different redirect origin.
+            if (request.sendHwid && sendHwidToCurrentOrigin) {
+                val hwid = request.hwid?.takeIf { it.isNotBlank() }
+                if (hwid != null) {
+                    requestBuilder.header("X-HWID", hwid)
+                    requestBuilder.header("X-Device-ID", hwid)
+                    requestBuilder.header("X-Device-OS", "Android")
+                    requestBuilder.header("X-Ver-OS", Build.VERSION.RELEASE.orEmpty())
+                    requestBuilder.header("X-Device-Model", Build.MODEL.orEmpty())
+                    requestBuilder.header("X-Device-Locale", Locale.getDefault().toLanguageTag())
                 }
             }
 
@@ -212,10 +207,14 @@ object HttpUtil {
                         if (location.isNullOrEmpty()) {
                             throw IOException("Redirect location not found")
                         }
-                        currentUrl = resolveLocation(currentUrl, location)
-                        if (currentUrl.isNullOrEmpty()) {
+                        val redirectedUrl = resolveLocation(currentUrl, location)
+                        if (redirectedUrl.isNullOrEmpty()) {
                             throw IOException("Failed to resolve redirect location")
                         }
+                        if (!sameOrigin(currentUrl, redirectedUrl)) {
+                            sendHwidToCurrentOrigin = false
+                        }
+                        currentUrl = redirectedUrl
                         continue
                     }
 
@@ -231,6 +230,15 @@ object HttpUtil {
             }
         }
         throw IOException("Too many redirects")
+    }
+
+    private fun sameOrigin(first: String, second: String): Boolean {
+        val a = runCatching { URL(first) }.getOrNull() ?: return false
+        val b = runCatching { URL(second) }.getOrNull() ?: return false
+        fun effectivePort(url: URL): Int = if (url.port != -1) url.port else url.defaultPort
+        return a.protocol.equals(b.protocol, ignoreCase = true) &&
+            a.host.equals(b.host, ignoreCase = true) &&
+            effectivePort(a) == effectivePort(b)
     }
 
     private fun applyEmbeddedBasicAuthHeader(rawUrl: String, requestBuilder: Request.Builder) {
