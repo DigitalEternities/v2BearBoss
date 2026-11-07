@@ -43,6 +43,7 @@ object SettingsManager {
         initRoutingRulesets(context)
         migrateServerListToSubscriptions()
         migrateHysteria2PinSHA256()
+        enableHwidForAllSubscriptions()
     }
 
     /**
@@ -411,7 +412,7 @@ object SettingsManager {
      * @return True if HEV TUN is used, false otherwise.
      */
     fun isUsingHevTun(): Boolean {
-        return MmkvManager.decodeSettingsBool(AppConfig.PREF_USE_HEV_TUNNEL, true)
+        return MmkvManager.decodeSettingsBool(AppConfig.PREF_USE_HEV_TUNNEL, false)
     }
 
     /**
@@ -455,12 +456,23 @@ object SettingsManager {
     /**
      * Ensure default settings are present in MMKV.
      */
+    private fun enableHwidForAllSubscriptions() {
+        MmkvManager.decodeSubscriptions().forEach { cached ->
+            if (!cached.subscription.sendHwid) {
+                cached.subscription.sendHwid = true
+                MmkvManager.encodeSubscription(cached.guid, cached.subscription)
+            }
+        }
+    }
+
     private fun ensureDefaultSettings() {
         // Write defaults in the exact order requested by the user
         ensureDefaultValue(AppConfig.PREF_MODE, VPN)
         ensureDefaultValue(AppConfig.PREF_VPN_DNS, AppConfig.DNS_VPN)
         ensureDefaultValue(AppConfig.PREF_VPN_MTU, AppConfig.VPN_MTU.toString())
         ensureDefaultValue(AppConfig.PREF_SOCKS_PORT, AppConfig.PORT_SOCKS)
+        ensureDefaultValue(AppConfig.PREF_DYNAMIC_SOCKS_PORT, "false")
+        ensureDefaultValue(AppConfig.PREF_USE_HEV_TUNNEL, "false")
         ensureDefaultValue(AppConfig.PREF_REMOTE_DNS, AppConfig.DNS_PROXY)
         ensureDefaultValue(AppConfig.PREF_DOMESTIC_DNS, AppConfig.DNS_DIRECT)
         ensureDefaultValue(AppConfig.PREF_DELAY_TEST_URL, AppConfig.DELAY_TEST_URL)
