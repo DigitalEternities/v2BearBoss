@@ -223,7 +223,7 @@ fun SubEditScreen(
             FormTextField(stringResource(R.string.sub_setting_user_agent), userAgent, { userAgent = it })
             FormTextField(stringResource(R.string.sub_setting_request_headers), requestHeaders, { requestHeaders = it })
             SettingsSwitchItem(
-                title = "Передавать HWID этому серверу (Android ID)",
+                title = "Передавать постоянный HWID этому серверу",
                 checked = sendHwid,
                 onCheckedChange = { sendHwid = it }
             )
