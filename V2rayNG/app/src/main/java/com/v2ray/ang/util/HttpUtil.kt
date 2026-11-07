@@ -2,6 +2,7 @@ package com.v2ray.ang.util
 
 import android.os.Build
 import android.provider.Settings
+import java.util.Locale
 import com.v2ray.ang.AngApplication
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.LOOPBACK
@@ -184,9 +185,10 @@ object HttpUtil {
 
                 if (androidId != null) {
                     requestBuilder.header("X-HWID", androidId)
-                    requestBuilder.header("X-Device-OS", "Android")
+                    requestBuilder.header("X-Device-OS", "android")
                     requestBuilder.header("X-Ver-OS", Build.VERSION.RELEASE.orEmpty())
                     requestBuilder.header("X-Device-Model", Build.MODEL.orEmpty())
+                    requestBuilder.header("X-Device-Locale", Locale.getDefault().language)
                 }
             }
 
