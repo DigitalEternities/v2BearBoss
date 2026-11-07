@@ -487,6 +487,17 @@ object AngConfigManager {
             LogUtil.i(AppConfig.TAG, url)
             val userAgent = it.subscription.userAgent
             val requestHeaders = it.subscription.requestHeaders
+            // This provider uses device-bound subscriptions. For this exact host only,
+            // enable sending the real Android ID once by default. The user can turn it
+            // off later in subscription settings; an explicit choice is preserved.
+            val providerHost = runCatching { URI(url).host?.lowercase() }.getOrNull()
+            val isDeviceBoundProvider = providerHost == "page2.anotherboring.top"
+            if (isDeviceBoundProvider && !it.subscription.sendHwidConfigured) {
+                it.subscription.sendHwid = true
+                it.subscription.sendHwidConfigured = true
+                MmkvManager.encodeSubscription(it.guid, it.subscription)
+            }
+            val sendHwid = it.subscription.sendHwid
             val proxyUsername = SettingsManager.getSocksUsername()
             val proxyPassword = SettingsManager.getSocksPassword()
 
@@ -508,7 +519,7 @@ object AngConfigManager {
                         url = url,
                         userAgent = userAgent,
                         requestHeaders = requestHeaders,
-                        sendHwid = it.subscription.sendHwid,
+                        sendHwid = sendHwid,
                         timeout = 15000,
                         httpPort = httpPort,
                         proxyUsername = proxyUsername,
