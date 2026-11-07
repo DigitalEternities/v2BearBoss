@@ -150,6 +150,7 @@ fun SubEditScreen(
         subItem.userAgent = userAgent
         subItem.requestHeaders = requestHeaders
         subItem.sendHwid = sendHwid
+        subItem.sendHwidConfigured = true
         subItem.filter = filter
         subItem.enabled = enabled
         subItem.autoUpdate = autoUpdate
