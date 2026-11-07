@@ -15,6 +15,7 @@ data class SubscriptionItem(
     var userAgent: String? = null,
     var requestHeaders: String? = null,
     var sendHwid: Boolean = false,
+    var sendHwidConfigured: Boolean = false,
     var usageInfo: SubscriptionUsageInfo? = null,
 )
 
