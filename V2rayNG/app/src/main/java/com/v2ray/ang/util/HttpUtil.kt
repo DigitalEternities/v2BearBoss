@@ -2,7 +2,6 @@ package com.v2ray.ang.util
 
 import android.os.Build
 import java.util.Locale
-import com.v2ray.ang.AngApplication
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.LOOPBACK
 import com.v2ray.ang.BuildConfig
