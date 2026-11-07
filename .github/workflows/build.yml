@@ -34,18 +34,23 @@ jobs:
           cache: gradle
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
 
       - name: Install Android SDK packages and NDK
         run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager \
-            "platform-tools" \
-            "platforms;android-37" \
+          sdkmanager --install \
+            "platforms;android-37.0" \
             "build-tools;37.0.0" \
             "ndk;30.0.16248370"
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/30.0.16248370" >> "$GITHUB_ENV"
           echo "NDK_HOME=$ANDROID_HOME/ndk/30.0.16248370" >> "$GITHUB_ENV"
+
+      - name: Set NDK version for Android Gradle Plugin
+        run: |
+          sed -i '/compileSdk = 37/a\    ndkVersion = "30.0.16248370"' V2rayNG/app/build.gradle.kts
+          grep -n 'ndkVersion' V2rayNG/app/build.gradle.kts
 
       - name: Cache compiled native library
         id: native-cache
@@ -74,7 +79,7 @@ jobs:
           echo "Using AndroidLibXrayLite tag: $TAG"
 
       - name: Download libv2ray.aar
-        uses: robinraju/release-downloader@v1
+        uses: robinraju/release-downloader@v1.13
         with:
           repository: 2dust/AndroidLibXrayLite
           tag: ${{ steps.xray.outputs.tag }}
