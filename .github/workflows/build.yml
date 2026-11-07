@@ -1,0 +1,109 @@
+name: Build V2BearBoss APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v2bearboss-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Android APK (arm64-v8a)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages and NDK
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-37" \
+            "build-tools;37.0.0" \
+            "ndk;30.0.16248370"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/30.0.16248370" >> "$GITHUB_ENV"
+          echo "NDK_HOME=$ANDROID_HOME/ndk/30.0.16248370" >> "$GITHUB_ENV"
+
+      - name: Cache compiled native library
+        id: native-cache
+        uses: actions/cache@v4
+        with:
+          path: libs
+          key: libhevtun-${{ runner.os }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD', 'compile-hevtun.sh') }}
+
+      - name: Build native library
+        if: steps.native-cache.outputs.cache-hit != 'true'
+        run: bash compile-hevtun.sh
+
+      - name: Copy native libraries into Android module
+        run: |
+          test -d libs
+          rm -rf V2rayNG/app/libs
+          cp -R libs V2rayNG/app/libs
+
+      - name: Find AndroidLibXrayLite version
+        id: xray
+        run: |
+          test -d AndroidLibXrayLite
+          cd AndroidLibXrayLite
+          TAG="$(git describe --tags --abbrev=0)"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Using AndroidLibXrayLite tag: $TAG"
+
+      - name: Download libv2ray.aar
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: 2dust/AndroidLibXrayLite
+          tag: ${{ steps.xray.outputs.tag }}
+          fileName: libv2ray.aar
+          out-file-path: V2rayNG/app/libs/
+
+      - name: Build arm64-v8a debug APK
+        working-directory: V2rayNG
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          chmod +x ./gradlew
+          ./gradlew --no-daemon assembleFdroidDebug -PABI_FILTERS=arm64-v8a
+
+      - name: Verify APK output
+        id: apk
+        run: |
+          APK="$(find V2rayNG/app/build/outputs/apk -type f -name '*arm64-v8a*.apk' -print -quit)"
+          if [ -z "$APK" ]; then
+            echo "No arm64-v8a APK was produced."
+            find V2rayNG/app/build/outputs/apk -maxdepth 5 -type f -print || true
+            exit 1
+          fi
+          echo "path=$APK" >> "$GITHUB_OUTPUT"
+          echo "Built APK: $APK"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: V2BearBoss-arm64-v8a-debug
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
