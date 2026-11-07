@@ -129,6 +129,7 @@ fun SubEditScreen(
     var isUrlError by rememberSaveable { mutableStateOf(false) }
     var userAgent by rememberSaveable { mutableStateOf(initial.userAgent.orEmpty()) }
     var requestHeaders by rememberSaveable { mutableStateOf(initial.requestHeaders.orEmpty()) }
+    var sendHwid by rememberSaveable { mutableStateOf(initial.sendHwid) }
     var filter by rememberSaveable { mutableStateOf(initial.filter ?: "") }
     var enabled by rememberSaveable { mutableStateOf(initial.enabled) }
     var autoUpdate by rememberSaveable { mutableStateOf(initial.autoUpdate) }
@@ -148,6 +149,7 @@ fun SubEditScreen(
         subItem.url = url
         subItem.userAgent = userAgent
         subItem.requestHeaders = requestHeaders
+        subItem.sendHwid = sendHwid
         subItem.filter = filter
         subItem.enabled = enabled
         subItem.autoUpdate = autoUpdate
@@ -220,6 +222,11 @@ fun SubEditScreen(
             )
             FormTextField(stringResource(R.string.sub_setting_user_agent), userAgent, { userAgent = it })
             FormTextField(stringResource(R.string.sub_setting_request_headers), requestHeaders, { requestHeaders = it })
+            SettingsSwitchItem(
+                title = "Передавать HWID этому серверу (Android ID)",
+                checked = sendHwid,
+                onCheckedChange = { sendHwid = it }
+            )
             FormTextField(stringResource(R.string.sub_setting_filter), filter, { filter = it })
             SettingsSwitchItem(
                 title = stringResource(R.string.sub_setting_enable),
