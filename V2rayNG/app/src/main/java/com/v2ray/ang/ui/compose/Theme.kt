@@ -202,10 +202,24 @@ fun AppTheme(
         baseColorScheme.copy(
             primary = accent,
             onPrimary = onAccent,
-            primaryContainer = accent.copy(alpha = 0.22f),
+            primaryContainer = accent.copy(alpha = if (darkTheme) 0.30f else 0.18f),
             onPrimaryContainer = if (darkTheme) Color.White else Color(0xFF171717),
+            secondary = accent.copy(alpha = 0.82f),
+            onSecondary = onAccent,
+            secondaryContainer = accent.copy(alpha = if (darkTheme) 0.22f else 0.14f),
+            onSecondaryContainer = if (darkTheme) Color.White else Color(0xFF171717),
+            tertiary = accent.copy(alpha = 0.68f),
+            onTertiary = onAccent,
+            tertiaryContainer = accent.copy(alpha = if (darkTheme) 0.18f else 0.11f),
+            onTertiaryContainer = if (darkTheme) Color.White else Color(0xFF171717),
+            outline = accent.copy(alpha = 0.72f),
+            outlineVariant = accent.copy(alpha = 0.30f),
             inversePrimary = accent,
-            surfaceTint = accent
+            surfaceTint = accent,
+            surfaceContainerLow = Color.lerp(baseColorScheme.surfaceContainerLow, accent, 0.035f),
+            surfaceContainer = Color.lerp(baseColorScheme.surfaceContainer, accent, 0.055f),
+            surfaceContainerHigh = Color.lerp(baseColorScheme.surfaceContainerHigh, accent, 0.075f),
+            surfaceContainerHighest = Color.lerp(baseColorScheme.surfaceContainerHighest, accent, 0.09f)
         )
     } ?: baseColorScheme
     val snackbarController = rememberAppSnackbarController()
