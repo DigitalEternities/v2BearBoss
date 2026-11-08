@@ -165,7 +165,7 @@ fun HomeConnectionCard(
 }
 
 @Composable
-private fun CosmicBackdrop(modifier: Modifier = Modifier) {
+fun CosmicBackdrop(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         drawRect(
             brush = Brush.verticalGradient(
