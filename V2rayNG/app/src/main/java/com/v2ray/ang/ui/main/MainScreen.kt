@@ -204,6 +204,7 @@ fun MainScreen(
             ) {
                 HomeConnectionCard(
                     isRunning = isRunning,
+                    isConnecting = uiState.isConnecting,
                     isTesting = uiState.isTesting,
                     displayText = displayText,
                     onConnectClick = { onAction(MainAction.ToggleService) },
