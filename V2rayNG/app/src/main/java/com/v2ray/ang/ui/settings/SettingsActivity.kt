@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -165,6 +168,7 @@ fun SettingsScreen(
     }
     var uiModeNight by rememberMmkvString(AppConfig.PREF_UI_MODE_NIGHT, "0")
     var dynamicColor by rememberMmkvBool(AppConfig.PREF_DYNAMIC_COLOR, true)
+    var customAccentHex by rememberMmkvString("pref_custom_accent_hex", "")
 
     var ipv6Enabled by rememberMmkvBool(AppConfig.PREF_IPV6_ENABLED, false)
     var preferIpv6 by rememberMmkvBool(AppConfig.PREF_PREFER_IPV6, false)
@@ -275,12 +279,50 @@ fun SettingsScreen(
                     title = stringResource(R.string.title_pref_dynamic_color),
                     summary = stringResource(R.string.summary_pref_dynamic_color),
                     checked = dynamicColor,
-                    enabled = dynamicColorSupported,
+                    enabled = dynamicColorSupported && customAccentHex.isBlank(),
                     onCheckedChange = {
                         dynamicColor = it
                         ThemeManager.setDynamicColorEnabled(it)
                     }
                 )
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    Text(
+                        text = "Свой акцентный цвет",
+                        style = androidx.compose.material3.MaterialTheme.typography.titleSmall
+                    )
+                    OutlinedTextField(
+                        value = customAccentHex,
+                        onValueChange = {
+                            customAccentHex = it
+                            ThemeManager.setCustomAccentHex(it)
+                            if (ThemeManager.isValidAccent(it) && it.isNotBlank()) {
+                                dynamicColor = false
+                                ThemeManager.setDynamicColorEnabled(false)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = { Text("HEX, например #F00000") },
+                        supportingText = {
+                            Text(
+                                if (ThemeManager.isValidAccent(customAccentHex)) {
+                                    "Формат: #RRGGBB или #AARRGGBB"
+                                } else {
+                                    "Нужно 6 или 8 шестнадцатеричных символов после #"
+                                }
+                            )
+                        },
+                        isError = !ThemeManager.isValidAccent(customAccentHex)
+                    )
+                    TextButton(
+                        onClick = {
+                            customAccentHex = ""
+                            ThemeManager.setCustomAccentHex("")
+                        }
+                    ) {
+                        Text("Сбросить цвет")
+                    }
+                }
                 SettingsListItem(
                     title = stringResource(R.string.title_language),
                     entries = languageEntries,

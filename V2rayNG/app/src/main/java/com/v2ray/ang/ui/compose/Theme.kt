@@ -18,6 +18,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -141,11 +142,28 @@ object ThemeManager {
         _dynamicColorEnabled.value = enabled
     }
 
+    private const val CUSTOM_ACCENT_KEY = "pref_custom_accent_hex"
+    private val _customAccentHex = MutableStateFlow(
+        MmkvManager.decodeSettingsString(CUSTOM_ACCENT_KEY, "") ?: ""
+    )
+    val customAccentHex: StateFlow<String> = _customAccentHex.asStateFlow()
+
+    fun setCustomAccentHex(value: String) {
+        val normalized = value.trim()
+        MmkvManager.encodeSettings(CUSTOM_ACCENT_KEY, normalized)
+        _customAccentHex.value = normalized
+    }
+
+    fun isValidAccent(value: String): Boolean =
+        value.isBlank() || value.trim().matches(Regex("^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"))
+
     fun refresh() {
         _themeMode.value =
             MmkvManager.decodeSettingsString(AppConfig.PREF_UI_MODE_NIGHT, "0") ?: "0"
         _dynamicColorEnabled.value =
             MmkvManager.decodeSettingsBool(AppConfig.PREF_DYNAMIC_COLOR, false)
+        _customAccentHex.value =
+            MmkvManager.decodeSettingsString(CUSTOM_ACCENT_KEY, "") ?: ""
     }
 }
 
@@ -167,8 +185,9 @@ fun AppTheme(
     content: @Composable () -> Unit
 ) {
     val dynamicColor by ThemeManager.dynamicColorEnabled.collectAsState()
+    val customAccentHex by ThemeManager.customAccentHex.collectAsState()
     val context = LocalContext.current
-    val colorScheme = when {
+    val baseColorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
@@ -176,6 +195,19 @@ fun AppTheme(
         darkTheme -> DarkColor
         else -> LightColor
     }
+    val customAccent = customAccentHex.takeIf { ThemeManager.isValidAccent(it) && it.isNotBlank() }
+        ?.let { runCatching { Color(android.graphics.Color.parseColor(it)) }.getOrNull() }
+    val colorScheme = customAccent?.let { accent ->
+        val onAccent = if (accent.luminance() > 0.48f) Color(0xFF111111) else Color.White
+        baseColorScheme.copy(
+            primary = accent,
+            onPrimary = onAccent,
+            primaryContainer = accent.copy(alpha = 0.22f),
+            onPrimaryContainer = if (darkTheme) Color.White else Color(0xFF171717),
+            inversePrimary = accent,
+            surfaceTint = accent
+        )
+    } ?: baseColorScheme
     val snackbarController = rememberAppSnackbarController()
 
     val view = LocalView.current
