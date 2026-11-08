@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,36 +24,25 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 
 @Composable
 fun HomeConnectionCard(
     isRunning: Boolean,
+    isConnecting: Boolean,
     isTesting: Boolean,
     displayText: String,
     onConnectClick: () -> Unit,
     onTestClick: () -> Unit
 ) {
-    var isConnecting by remember { mutableStateOf(false) }
-    LaunchedEffect(isConnecting, isRunning) {
-        if (isRunning) {
-            isConnecting = false
-        } else if (isConnecting) {
-            delay(15_000)
-            isConnecting = false
-        }
-    }
 
     val pulse = rememberInfiniteTransition(label = "connection-pulse")
     val pulseScale by pulse.animateFloat(
@@ -93,7 +83,6 @@ fun HomeConnectionCard(
                     .clip(CircleShape)
                     .background(buttonColor)
                     .clickable(enabled = !isConnecting) {
-                        if (!isRunning) isConnecting = true
                         onConnectClick()
                     },
                 contentAlignment = Alignment.Center
@@ -105,12 +94,12 @@ fun HomeConnectionCard(
                         strokeWidth = 5.dp
                     )
                 } else {
-                    Text(
-                        text = if (isRunning) "Ⅱ" else "⏻",
-                        color = buttonTextColor,
-                        style = MaterialTheme.typography.displayLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Canvas(modifier = Modifier.size(76.dp)) {
+                        val stroke = size.minDimension * 0.075f
+                        drawArc(color = buttonTextColor, startAngle = 135f, sweepAngle = 270f, useCenter = false, topLeft = androidx.compose.ui.geometry.Offset(size.width * 0.13f, size.height * 0.13f), size = androidx.compose.ui.geometry.Size(size.width * 0.74f, size.height * 0.74f), style = Stroke(width = stroke, cap = StrokeCap.Round))
+                        drawLine(color = buttonTextColor, start = androidx.compose.ui.geometry.Offset(size.width * 0.5f, size.height * 0.08f), end = androidx.compose.ui.geometry.Offset(size.width * 0.5f, size.height * 0.51f), strokeWidth = stroke, cap = StrokeCap.Round)
+                    }
+
                 }
             }
             Spacer(Modifier.height(20.dp))
