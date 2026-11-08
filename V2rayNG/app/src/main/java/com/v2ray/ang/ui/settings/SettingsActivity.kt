@@ -148,7 +148,7 @@ fun SettingsScreen(
     var useHevTun by rememberMmkvBool(AppConfig.PREF_USE_HEV_TUNNEL, false)
 
     var enableLocalProxy by rememberMmkvBool(AppConfig.PREF_ENABLE_LOCAL_PROXY, true)
-    var socksPort by rememberMmkvString(AppConfig.PREF_SOCKS_PORT, "")
+    var socksPort by rememberMmkvString(AppConfig.PREF_SOCKS_PORT, AppConfig.PORT_SOCKS)
     var dynamicSocksPort by rememberMmkvBool(AppConfig.PREF_DYNAMIC_SOCKS_PORT, false)
     var socksUsername by rememberMmkvString(AppConfig.PREF_SOCKS_USERNAME, "")
     var socksPassword by rememberMmkvString(AppConfig.PREF_SOCKS_PASSWORD, "")
