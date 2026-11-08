@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -216,10 +217,10 @@ fun AppTheme(
             outlineVariant = accent.copy(alpha = 0.30f),
             inversePrimary = accent,
             surfaceTint = accent,
-            surfaceContainerLow = Color.lerp(baseColorScheme.surfaceContainerLow, accent, 0.035f),
-            surfaceContainer = Color.lerp(baseColorScheme.surfaceContainer, accent, 0.055f),
-            surfaceContainerHigh = Color.lerp(baseColorScheme.surfaceContainerHigh, accent, 0.075f),
-            surfaceContainerHighest = Color.lerp(baseColorScheme.surfaceContainerHighest, accent, 0.09f)
+            surfaceContainerLow = lerp(baseColorScheme.surfaceContainerLow, accent, 0.035f),
+            surfaceContainer = lerp(baseColorScheme.surfaceContainer, accent, 0.055f),
+            surfaceContainerHigh = lerp(baseColorScheme.surfaceContainerHigh, accent, 0.075f),
+            surfaceContainerHighest = lerp(baseColorScheme.surfaceContainerHighest, accent, 0.09f)
         )
     } ?: baseColorScheme
     val snackbarController = rememberAppSnackbarController()
