@@ -168,8 +168,10 @@ class MainActivity : HelperBaseComponentActivity() {
 
     private fun handleFabAction() {
         if (mainViewModel.uiState.value.isRunning) {
+            mainViewModel.setConnectionStarting(false)
             LauncherManager.stopService(this)
         } else {
+            mainViewModel.setConnectionStarting(true)
             requestServiceStart()
         }
     }
@@ -191,6 +193,7 @@ class MainActivity : HelperBaseComponentActivity() {
 
     private fun startV2Ray() {
         if (mainViewModel.uiState.value.selectedGuid.isNullOrEmpty()) {
+            mainViewModel.setConnectionStarting(false)
             toast(R.string.title_file_chooser)
             return
         }
