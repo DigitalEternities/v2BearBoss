@@ -128,14 +128,16 @@ class MainViewModel(
 
     private fun handleServiceEvent(event: MainServiceEvent) {
         when (event) {
-            MainServiceEvent.StateRunning -> updateRunningState(true, clearTestingText = false)
-            MainServiceEvent.StateNotRunning -> updateRunningState(false, clearTestingText = false)
+            MainServiceEvent.StateRunning -> { setConnectionStarting(false); updateRunningState(true, clearTestingText = false) }
+            MainServiceEvent.StateNotRunning -> { setConnectionStarting(false); updateRunningState(false, clearTestingText = false) }
             MainServiceEvent.StateStartSuccess -> {
                 toastSuccess(R.string.toast_services_success)
+                setConnectionStarting(false)
                 updateRunningState(true)
             }
 
             is MainServiceEvent.StateStartFailure -> {
+                setConnectionStarting(false)
                 if (!event.message.isNullOrBlank()) {
                     toastError(event.message)
                 } else {
@@ -144,7 +146,7 @@ class MainViewModel(
                 updateRunningState(false)
             }
 
-            MainServiceEvent.StateStopSuccess -> updateRunningState(false)
+            MainServiceEvent.StateStopSuccess -> { setConnectionStarting(false); updateRunningState(false) }
             is MainServiceEvent.MeasureDelayResult -> {
                 if (!uiState.value.isRunning || !testRequests.completeCurrent(event.requestId)) return
                 _uiState.update { it.copy(isTesting = testRequests.isTesting, status = MainStatus.ConnectionTest(event.result)) }
@@ -926,6 +928,10 @@ class MainViewModel(
 
     private fun consumeLocateTarget() {
         _uiState.update { it.copy(locateTarget = null) }
+    }
+
+    fun setConnectionStarting(starting: Boolean) {
+        _uiState.update { it.copy(isConnecting = starting && !it.isRunning) }
     }
 
     // ---------- Running state ----------
